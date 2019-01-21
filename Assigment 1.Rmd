@@ -1,0 +1,102 @@
+---
+title: "Assignment 1"
+author: "Gracie White"
+date: "1/18/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+
+library(tidyverse)
+library(RColorBrewer)
+library(janitor)
+library(MASS)
+library(ggrepel)
+library(RColorBrewer)
+library(factoextra)
+library(ggbiplot)
+library(shinythemes)
+library(devtools)
+
+launches <- read_csv("launches.csv")
+angencies <- read_csv("agencies.csv")
+
+
+```
+##Task 1:
+```{r}
+
+select <- dplyr::select
+#simplify data
+
+launch_df <- launches %>% 
+  select(launch_year, state_code, agency_type) %>% 
+  group_by(agency_type)
+
+##graph
+
+launch_plot <- ggplot(launch_df, aes(x = launch_year, fill = agency_type)) +
+  geom_area(stat = "count", alpha = .75, size =.5, color = "black") + 
+  theme_bw() +
+  scale_fill_brewer(palette = "Dark2", name = "Agency Type", labels = c("Private", "Startup", "State")) + 
+  labs(title = "Rocket Launches", x = "Year", y = "Number of Launches") +
+  theme(axis.text.x=element_text(angle=50, size=10, vjust=0.5), plot.title = element_text(hjust = 0.5, face = "bold", size = 15), axis.title.x = element_text(face = "bold"), axis.title.y = element_text(face = "bold"))
+
+launch_plot
+
+```
+
+
+
+## Task 2:
+
+```{r, results='hide'}
+#Read in the Data
+nutrients <- read_csv("usda_nutrients (1).csv")
+
+#initial wrangling, and filtering for relvant variables
+fruits_df <- nutrients %>% 
+  filter(FoodGroup ==  'Vegetables and Vegetable Products' | FoodGroup == 'Fruits and Fruit Juices') %>%
+  filter(str_detect(.$ShortDescrip, "RAW"))
+
+
+#PCA anaylsis for protein --> zinc, columns 9:30
+
+fruits_pca <- prcomp(fruits_df[9:30], scale = TRUE)
+summary(fruits_pca)
+#looks like we'll get almost 40% of the variance explained by the first two principal components
+
+```
+
+```{r}
+
+##Factoextra customizations explorations
+
+#biplot showing points and vectors, fvis PCA
+
+fviz_pca_biplot(fruits_pca,
+                geom.ind = "point", 
+                pointshape = 21, 
+                point.size = 2, 
+                label = "var", 
+                repel = TRUE, 
+                fill.ind = fruits_df$FoodGroup, 
+                color.ind = "black",
+                palette = "Accent", 
+                legend.title = "Food Groups", 
+                alpha = 0.5) +
+  theme(legend.direction = 'horizontal', legend.position = 'top')
+
+```
+
+
+
+
+
+####This biplot clearly shows that sugar is negatively correlated with almost every other nutrient, especially protein, exept for Vitamin C. This makes sense, as sweet fruits and also often high in Vitamin C, such as oranges. Fruits and fruit juices are overall much higher in sugar content than vegetables, though vegetables appear higher in just about every other nutrient. 
+
+
